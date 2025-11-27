@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль - Site4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .profile-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h1>Профиль пользователя</h1>
+
+<div class="profile-info" id="profile-info">
+    <p>Загрузка информации...</p>
+</div>
+
+<button onclick="logout()">Выход</button>
+<p><a href="/">На главную</a></p>
+
+<script>
+    // Загружаем данные профиля через API
+    fetch('/api/profile')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Not authorized');
+            }
+            return response.json();
+        })
+        .then(user => {
+            document.getElementById('profile-info').innerHTML = `
+                <p><strong>Имя пользователя:</strong> ${user.username}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Роль:</strong> ${user.role}</p>
+            `;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('profile-info').innerHTML =
+                '<p style="color: red">Ошибка загрузки профиля</p>';
+        });
+
+    async function logout() {
+        try {
+            // Вызываем logout на сервере (удаляем cookie)
+            await fetch('/auth/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+
+        // Редирект на главную
+        window.location.href = '/';
+    }
+</script>
+</body>
+</html>

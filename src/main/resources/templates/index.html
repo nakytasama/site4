@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site4 - Галерея изображений</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .auth-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .auth-links a {
+            margin: 0 10px;
+            padding: 8px 16px;
+            text-decoration: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+        }
+        .user-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h1>Добро пожаловать в Site4!</h1>
+<p>Платформа для обмена изображениями</p>
+
+<div class="auth-section">
+    <div id="guest-links">
+        <p>Вы не авторизованы</p>
+        <div class="auth-links">
+            <a href="/login">Вход</a>
+            <a href="/register">Регистрация</a>
+        </div>
+    </div>
+    <div class="user-info" id="user-info" style="display: none;">
+        <p>Добро пожаловать, <span id="username"></span>!</p>
+        <p><a href="/profile">Перейти в профиль</a></p>
+        <button onclick="logout()">Выход</button>
+    </div>
+</div>
+
+<div id="gallery">
+    <h2>Галерея изображений</h2>
+    <div id="images-container">
+        <p>Здесь будут отображаться изображения...</p>
+    </div>
+</div>
+
+<script>
+    // Проверка авторизации при загрузке страницы
+    async function checkAuth() {
+        try {
+            // Проверяем авторизацию через API (cookie)
+            const response = await fetch('/api/profile');
+
+            if (response.ok) {
+                const user = await response.json();
+                document.getElementById('username').textContent = user.username;
+                document.getElementById('guest-links').style.display = 'none';
+                document.getElementById('user-info').style.display = 'block';
+            } else {
+                throw new Error('Not authorized');
+            }
+        } catch (error) {
+            console.error('Auth check error:', error);
+            document.getElementById('guest-links').style.display = 'block';
+            document.getElementById('user-info').style.display = 'none';
+        }
+    }
+
+    async function logout() {
+        try {
+            // Вызываем logout на сервере (удаляем cookie)
+            await fetch('/auth/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+
+        // Редирект на главную
+        window.location.href = '/';
+    }
+
+    // Загружаем изображения (пока заглушка)
+    function loadImages() {
+        // Здесь будет код для загрузки изображений
+        console.log('Загрузка изображений...');
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        checkAuth();
+        loadImages();
+    });
+</script>
+</body>
+</html>
