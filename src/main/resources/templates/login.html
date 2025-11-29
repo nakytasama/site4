@@ -3,65 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход - Site4</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-        .success {
-            color: green;
-            margin-top: 10px;
-        }
-    </style>
+    <title>Вход - Галерея изображений</title>
+    <link rel="stylesheet" href="/css/auth-forms.css">
 </head>
-<body>
-<h1>Вход в систему</h1>
+<body class="auth-body">
+<div class="auth-form-container">
+    <a href="/" class="auth-back-link">← На главную</a>
 
-<form id="loginForm">
-    <div class="form-group">
-        <label for="username">Имя пользователя:</label>
-        <input type="text" id="username" name="username" required>
+    <div class="auth-form-header">
+        <h2>Вход в систему</h2>
     </div>
 
-    <div class="form-group">
-        <label for="password">Пароль:</label>
-        <input type="password" id="password" name="password" required>
-    </div>
+    <div id="message"></div>
 
-    <button type="submit">Войти</button>
-</form>
+    <form id="loginForm">
+        <div class="auth-form-group">
+            <label for="username">Логин:</label>
+            <input type="text" id="username" name="username" class="auth-form-control"
+                   required placeholder="Введите ваш логин">
+        </div>
 
-<div id="message"></div>
+        <div class="auth-form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" name="password" class="auth-form-control"
+                   required placeholder="Введите ваш пароль">
+        </div>
 
-<p>Нет аккаунта? <a href="/register">Зарегистрируйтесь</a></p>
-<p><a href="/">На главную</a></p>
+        <button type="submit" class="auth-btn auth-btn-primary">Войти</button>
+
+        <div class="auth-form-footer">
+            Еще нет аккаунта? <a href="/register">Зарегистрируйтесь</a>
+        </div>
+    </form>
+</div>
 
 <script>
     document.getElementById('loginForm').addEventListener('submit', async function(event) {
@@ -85,20 +59,23 @@
 
             if (response.ok) {
                 const data = await response.json();
+                messageDiv.innerHTML = '<div class="auth-success-message">Вход успешен! Перенаправление...</div>';
 
-                messageDiv.innerHTML = '<p class="success">Вход успешен! Перенаправление...</p>';
-
-                // Перенаправляем на главную страницу через 1 секунду
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 1000);
 
             } else {
-                const error = await response.text();
-                messageDiv.innerHTML = `<p class="error">Ошибка входа: ${error}</p>`;
+                const errorText = await response.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    messageDiv.innerHTML = `<div class="auth-error-message">${errorData.error}</div>`;
+                } catch (e) {
+                    messageDiv.innerHTML = `<div class="auth-error-message">Ошибка входа: ${errorText}</div>`;
+                }
             }
         } catch (error) {
-            messageDiv.innerHTML = `<p class="error">Ошибка сети: ${error.message}</p>`;
+            messageDiv.innerHTML = `<div class="auth-error-message">Ошибка сети: ${error.message}</div>`;
         }
     });
 </script>

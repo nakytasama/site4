@@ -32,12 +32,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String jwt = null;
 
-        // 1. Проверяем Authorization header
         String authHeader = request.getHeader(HEADER_NAME);
         if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
             jwt = authHeader.substring(BEARER_PREFIX.length());
         }
-        // 2. Проверяем Cookie
         else if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if (COOKIE_NAME.equals(cookie.getName())) {
@@ -51,7 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtService.extractUserName(jwt);
 
             if (StringUtils.isNotEmpty(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // ИСПРАВЛЕНО: используем loadUserByUsername напрямую
                 UserDetails userDetails = userService.loadUserByUsername(username);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {

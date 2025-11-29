@@ -29,7 +29,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category saveCategory(Category category) {
-        // Проверка существования категории с таким названием
         if (categoryRepository.existsByName(category.getName())) {
             throw new RuntimeException("Категория с именем '" + category.getName() + "' уже существует");
         }
@@ -40,14 +39,12 @@ public class CategoryServiceImpl implements CategoryService {
     public Category updateCategory(Long id, Category categoryDetails) {
         return categoryRepository.findById(id)
                 .map(category -> {
-                    // Проверка существования категории с таким названием (при редактировании)
                     if (!category.getName().equals(categoryDetails.getName()) &&
                             categoryRepository.existsByName(categoryDetails.getName())) {
                         throw new RuntimeException("Категория с именем '" + categoryDetails.getName() + "' уже существует");
                     }
 
                     category.setName(categoryDetails.getName());
-                    category.setDescription(categoryDetails.getDescription());
                     return categoryRepository.save(category);
                 })
                 .orElseThrow(() -> new RuntimeException("Категория не найдена"));
@@ -55,11 +52,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(Long id) {
-        // Проверка заполнена ли категория
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Категория не найдена"));
 
-        if (!category.getImages().isEmpty()) {
+        if (category.getImages() != null && !category.getImages().isEmpty()) {
             throw new RuntimeException("Нельзя удалить категорию, так как с ней связаны изображения");
         }
 

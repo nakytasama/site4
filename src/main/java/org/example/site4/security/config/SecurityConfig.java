@@ -30,19 +30,45 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests -> requests
+                        // Статические ресурсы
+                        .requestMatchers("/css/**", "/uploads/**", "/static/**").permitAll()
+
                         // Публичные страницы
-                        .requestMatchers("/", "/login", "/register","/static/**").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/logout").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+
+                        // Публичные API
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+
                         // Защищенные страницы
-                        .requestMatchers("/profile").authenticated()
+                        .requestMatchers("/profile", "/upload", "/edit-image").authenticated()
+                        .requestMatchers("/admin").hasRole("ADMIN")
+
+                        // Защищенные API
                         .requestMatchers("/api/profile/**").authenticated()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/images/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/images/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/images/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/categories/**").authenticated()
+                        .requestMatchers("/api/comments/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
+
+                            System.out.println("Authentication required for: " + request.getRequestURI());
+
                             response.sendRedirect("/login");
                         })
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .deleteCookies("jwtToken") // Удаление печенья
+                        .invalidateHttpSession(true)
                 )
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

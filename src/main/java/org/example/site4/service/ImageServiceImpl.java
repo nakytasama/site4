@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.site4.domain.Category;
 import org.example.site4.domain.Image;
 import org.example.site4.security.domain.User;
+import org.example.site4.security.service.UserService;
 import org.example.site4.repository.CategoryRepository;
 import org.example.site4.repository.ImageRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,8 +25,9 @@ import java.util.UUID;
 public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
     private final CategoryRepository categoryRepository;
+    private final UserService userService;
 
-    @Value("${upload.path:uploads}")
+    @Value("${upload.path}")
     private String uploadPath;
 
     @Override
@@ -66,9 +68,10 @@ public class ImageServiceImpl implements ImageService {
                 Files.createDirectories(uploadDir);
             }
 
+            // Генерируем уникальное имя файла
             String fileName = generateFileName(file);
-
             Path filePath = uploadDir.resolve(fileName);
+
             Files.copy(file.getInputStream(), filePath);
 
             image.setImagePath(fileName);
@@ -90,6 +93,15 @@ public class ImageServiceImpl implements ImageService {
     public Image updateImage(Long id, Image imageDetails, MultipartFile file, Long categoryId) {
         return imageRepository.findById(id)
                 .map(image -> {
+                    User currentUser = userService.getCurrentUser();
+                    boolean isOwner = image.getUser().getId().equals(currentUser.getId());
+                    boolean isAdmin = currentUser.getAuthorities().stream()
+                            .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+
+                    if (!isOwner && !isAdmin) {
+                        throw new RuntimeException("Вы можете редактировать только свои изображения");
+                    }
+
                     if (imageDetails.getTitle() != null) {
                         image.setTitle(imageDetails.getTitle());
                     }
@@ -101,11 +113,10 @@ public class ImageServiceImpl implements ImageService {
                         Category category = categoryRepository.findById(categoryId)
                                 .orElseThrow(() -> new RuntimeException("Категория не найдена"));
                         image.setCategory(category);
-                    } else if (categoryId == null) {
+                    } else {
                         image.setCategory(null);
                     }
 
-                    // Обновляем файл если передан новый
                     if (file != null && !file.isEmpty()) {
                         validateFile(file);
                         updateImageFile(image, file);
@@ -122,7 +133,6 @@ public class ImageServiceImpl implements ImageService {
                 .orElseThrow(() -> new RuntimeException("Изображение не найдено"));
 
         try {
-            // Удаляем файл
             Path filePath = Paths.get(uploadPath, image.getImagePath());
             Files.deleteIfExists(filePath);
 
@@ -138,8 +148,6 @@ public class ImageServiceImpl implements ImageService {
         return imageRepository.findByOrderByCreatedAtDesc(pageRequest);
     }
 
-    // Вспомогательные методы
-
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new RuntimeException("Файл не может быть пустым");
@@ -148,11 +156,6 @@ public class ImageServiceImpl implements ImageService {
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new RuntimeException("Можно загружать только изображения");
-        }
-
-        // Проверяем размер файла (максимум 100MB)
-        if (file.getSize() > 100 * 1024 * 1024) {
-            throw new RuntimeException("Размер файла не должен превышать 100MB");
         }
     }
 
@@ -164,7 +167,6 @@ public class ImageServiceImpl implements ImageService {
             fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
 
-        // Убираем небезопасные символы из имени файла
         String safeName = originalFileName != null ?
                 originalFileName.replaceAll("[^a-zA-Z0-9.-]", "_") : "image";
 
@@ -173,11 +175,9 @@ public class ImageServiceImpl implements ImageService {
 
     private void updateImageFile(Image image, MultipartFile newFile) {
         try {
-            // Удаляем старый файл
             Path oldFilePath = Paths.get(uploadPath, image.getImagePath());
             Files.deleteIfExists(oldFilePath);
 
-            // Сохраняем новый файл
             String fileName = generateFileName(newFile);
             Path newFilePath = Paths.get(uploadPath, fileName);
             Files.copy(newFile.getInputStream(), newFilePath);

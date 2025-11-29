@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить изображение</title>
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/image-forms.css">
+    <style>
+        .category-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .category-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 300px;
+        }
+        .category-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="image-form-container">
+    <a href="/profile" class="image-back-link">← Назад</a>
+    <div class="image-form-header">
+        <h2>Добавить новое изображение</h2>
+    </div>
+
+    <div id="errorMessage" class="image-error-message" style="display: none;"></div>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div class="image-form-group">
+            <label for="title">Название:</label>
+            <input type="text" id="title" name="title" class="image-form-control"
+                   required maxlength="100" placeholder="Введите название">
+        </div>
+
+        <div class="image-form-group">
+            <label for="description">Описание:</label>
+            <textarea id="description" name="description" class="image-form-control image-form-textarea"
+                      maxlength="500" placeholder="Добавьте описание"></textarea>
+        </div>
+
+        <div class="image-form-group">
+            <label for="category">Категория:</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="category" name="categoryId" class="image-form-control" style="flex: 1;">
+                    <option value="">Без категории</option>
+                </select>
+                <button type="button" class="image-btn image-btn-secondary" onclick="showCreateCategoryModal()" style="white-space: nowrap;">
+                    + Создать
+                </button>
+            </div>
+        </div>
+
+        <div class="image-form-group">
+            <label for="file">Изображение:</label>
+            <input type="file" id="file" name="file" class="image-form-control"
+                   accept="image/*" required>
+        </div>
+
+        <div>
+            <button type="submit" class="image-btn image-btn-primary">Загрузить</button>
+            <a href="/profile" class="image-btn image-btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
+
+<!-- Модальное окно для создания категории -->
+<div id="createCategoryModal" class="category-modal">
+    <div class="category-modal-content">
+        <h3>Создать новую категорию</h3>
+        <div class="image-form-group">
+            <label for="newCategoryName">Название категории:</label>
+            <input type="text" id="newCategoryName" class="image-form-control" placeholder="Введите название">
+        </div>
+        <div class="category-actions">
+            <button type="button" class="image-btn image-btn-secondary" onclick="hideCreateCategoryModal()">Отмена</button>
+            <button type="button" class="image-btn image-btn-primary" onclick="createCategory()">Создать</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Функции для модального окна категорий
+    function showCreateCategoryModal() {
+        document.getElementById('createCategoryModal').style.display = 'block';
+        document.getElementById('newCategoryName').value = '';
+    }
+
+    function hideCreateCategoryModal() {
+        document.getElementById('createCategoryModal').style.display = 'none';
+    }
+
+    // Создание новой категории
+    async function createCategory() {
+        const categoryName = document.getElementById('newCategoryName').value.trim();
+
+        if (!categoryName) {
+            alert('Введите название категории');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: categoryName
+                })
+            });
+
+            if (response.ok) {
+                const newCategory = await response.json();
+                hideCreateCategoryModal();
+
+                const categorySelect = document.getElementById('category');
+                const option = document.createElement('option');
+                option.value = newCategory.id;
+                option.textContent = newCategory.name;
+                categorySelect.appendChild(option);
+
+                categorySelect.value = newCategory.id;
+
+                alert('Категория создана успешно!');
+            } else {
+                const errorText = await response.text();
+                alert('Ошибка создания категории: ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Ошибка сети при создании категории');
+        }
+    }
+
+    // Загрузка категорий при загрузке страницы
+    async function loadCategories() {
+        try {
+            const response = await fetch('/api/categories');
+            if (!response.ok) throw new Error('Ошибка загрузки категорий');
+
+            const categories = await response.json();
+            const categorySelect = document.getElementById('category');
+
+            while (categorySelect.children.length > 1) {
+                categorySelect.removeChild(categorySelect.lastChild);
+            }
+
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Ошибка загрузки категорий:', error);
+        }
+    }
+
+    // Обработка формы загрузки
+    document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const categorySelect = document.getElementById('category');
+        const fileInput = document.getElementById('file');
+        const errorMessage = document.getElementById('errorMessage');
+
+        errorMessage.style.display = 'none';
+
+        if (!fileInput.files[0]) {
+            showError('Пожалуйста, выберите файл');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+
+        if (categorySelect.value) {
+            formData.append('categoryId', categorySelect.value);
+        }
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const response = await fetch('/api/images', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                window.location.href = '/profile';
+            } else {
+                const errorText = await response.text();
+                showError('Ошибка при загрузке: ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Ошибка сети: ' + error.message);
+        }
+    });
+
+    function showError(message) {
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+    }
+
+    // Загружаем категории при старте
+    document.addEventListener('DOMContentLoaded', loadCategories);
+</script>
+</body>
+</html>

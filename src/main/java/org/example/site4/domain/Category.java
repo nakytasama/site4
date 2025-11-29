@@ -1,5 +1,6 @@
 package org.example.site4.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.ArrayList;
@@ -16,8 +17,7 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String name;
 
-    private String description;
-
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Image> images = new ArrayList<>();
 }

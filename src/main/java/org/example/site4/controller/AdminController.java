@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -39,12 +40,14 @@ public class AdminController {
     }
 
     @PutMapping("/users/{userId}/role")
-    public ResponseEntity<User> updateUserRole(@PathVariable Long userId, @RequestParam Role role) {
+    public ResponseEntity<?> updateUserRole(@PathVariable Long userId, @RequestParam Role role) {
         try {
             User updatedUser = userService.updateUserRole(userId, role);
             return ResponseEntity.ok(updatedUser);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            // Возвращаем JSON с ошибкой
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
@@ -54,7 +57,9 @@ public class AdminController {
             userService.deleteUser(userId);
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            // Возвращаем JSON с ошибкой
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
@@ -71,22 +76,21 @@ public class AdminController {
     }
 
     // Работа с категориями
-    @PostMapping("/categories")
-    public Category createCategory(@RequestBody Category category) {
-        return categoryService.saveCategory(category);
-    }
-
     @PutMapping("/categories/{categoryId}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long categoryId, @RequestBody Category category) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateCategory(@PathVariable Long categoryId, @RequestBody Category category) {
         try {
             Category updatedCategory = categoryService.updateCategory(categoryId, category);
             return ResponseEntity.ok(updatedCategory);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            // Возвращаем JSON с ошибкой
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     @DeleteMapping("/categories/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteCategory(@PathVariable Long categoryId) {
         try {
             categoryService.deleteCategory(categoryId);

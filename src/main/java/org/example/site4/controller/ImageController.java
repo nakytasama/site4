@@ -61,24 +61,33 @@ public class ImageController {
         return imageService.saveImage(image, file, currentUser, categoryId);
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/{id}/update")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Image> updateImage(
             @PathVariable Long id,
-            @RequestParam(value = "title", required = false) String title,
-            @RequestParam(value = "description", required = false) String description,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "file", required = false) MultipartFile file) {
 
+        System.out.println("=== UPDATE IMAGE METHOD CALLED ===");
+        System.out.println("ID: " + id);
+        System.out.println("Title: " + title);
+        System.out.println("Description: " + description);
+        System.out.println("Category ID: " + categoryId);
+        System.out.println("File: " + (file != null ? file.getOriginalFilename() : "null"));
+
         try {
             Image imageDetails = new Image();
-            if (title != null) imageDetails.setTitle(title);
-            if (description != null) imageDetails.setDescription(description);
+            imageDetails.setTitle(title);
+            imageDetails.setDescription(description);
 
             Image updatedImage = imageService.updateImage(id, imageDetails, file, categoryId);
             return ResponseEntity.ok(updatedImage);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            System.out.println("Error in updateImage: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(null);
         }
     }
 

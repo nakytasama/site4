@@ -3,73 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профиль - Site4</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .profile-info {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        button {
-            padding: 8px 16px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Мой профиль</title>
+    <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/gallery.css">
+    <link rel="stylesheet" href="/css/profile.css">
 </head>
 <body>
-<h1>Профиль пользователя</h1>
+<div th:replace="~{fragments/header :: header}"></div>
 
-<div class="profile-info" id="profile-info">
-    <p>Загрузка информации...</p>
+<div class="content-container">
+    <button class="add-btn" onclick="location.href='/upload'">Добавить изображение</button>
+
+    <div class="gallery" id="gallery">
+        <div th:if="${#lists.isEmpty(userImages)}" class="empty-message">
+            У вас пока нет изображений
+        </div>
+
+        <div th:each="image, stat : ${userImages}"
+             class="image-card">
+            <div class="image-content"
+                 th:data-id="${image.id}"
+                 th:data-index="${stat.index}"
+                 th:attr="data-category-id=${image.category?.id ?: ''},
+                      data-description=${image.description},
+                      data-category-name=${image.category?.name}"> <!-- Переносим сюда -->
+                <img th:src="@{'/uploads/' + ${image.imagePath}}"
+                     th:alt="${image.title}">
+                <div th:text="${image.title}">Название</div>
+            </div>
+            <div class="image-actions">
+                <button th:onclick="'editImage(' + ${image.id} + ')'">Редактировать</button>
+                <button th:onclick="'deleteImage(' + ${image.id} + ')'">Удалить</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<button onclick="logout()">Выход</button>
-<p><a href="/">На главную</a></p>
+<div class="modal" id="imageModal">
+    <div class="modal-container">
+        <div class="modal-content-wrapper">
+            <img class="modal-content" id="modalImage">
+
+            <div class="image-category-modal" id="modalCategory"></div>
+
+            <div class="image-description" id="modalDescription"></div>
+        </div>
+    </div>
+    <span class="close">&times;</span>
+    <span class="modal-nav prev">&lt;</span>
+    <span class="modal-nav next">&gt;</span>
+</div>
 
 <script>
-    // Загружаем данные профиля через API
-    fetch('/api/profile')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Not authorized');
-            }
-            return response.json();
-        })
-        .then(user => {
-            document.getElementById('profile-info').innerHTML = `
-                <p><strong>Имя пользователя:</strong> ${user.username}</p>
-                <p><strong>Email:</strong> ${user.email}</p>
-                <p><strong>Роль:</strong> ${user.role}</p>
-            `;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('profile-info').innerHTML =
-                '<p style="color: red">Ошибка загрузки профиля</p>';
-        });
+    let currentIndex = 0;
+    let images = [];
+    let modalOpen = false;
 
-    async function logout() {
-        try {
-            // Вызываем logout на сервере (удаляем cookie)
-            await fetch('/auth/logout', { method: 'POST' });
-        } catch (error) {
-            console.error('Logout error:', error);
+    function initGallery() {
+        const imageContents = document.querySelectorAll('.image-content');
+        images = Array.from(imageContents).map(content => ({
+            id: content.getAttribute('data-id'),
+            title: content.querySelector('div').textContent,
+            imagePath: content.querySelector('img').src.split('/uploads/')[1],
+            description: content.getAttribute('data-description') || '',
+            categoryId: content.getAttribute('data-category-id') || '',
+            categoryName: content.getAttribute('data-category-name') || 'Без категории'
+        }));
+
+        console.log('Загружены изображения в профиле:', images);
+
+        imageContents.forEach((content, index) => {
+            content.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    openImageModal(index);
+                }
+            });
+        });
+    }
+
+    function openImageModal(index) {
+        currentIndex = index;
+        showImage(images[currentIndex]);
+        document.getElementById('imageModal').style.display = 'block';
+        modalOpen = true;
+    }
+
+    function showImage(image) {
+        const modalImage = document.getElementById('modalImage');
+        const modalCategory = document.getElementById('modalCategory');
+        const modalDescription = document.getElementById('modalDescription');
+
+        modalImage.src = '/uploads/' + image.imagePath;
+
+        if (image.categoryName && image.categoryName.trim() !== '') {
+            modalCategory.textContent = 'Категория: ' + image.categoryName;
+            modalCategory.style.display = 'block';
+        } else {
+            modalCategory.style.display = 'none';
         }
 
-        // Редирект на главную
-        window.location.href = '/';
+        if (image.description && image.description.trim() !== '') {
+            modalDescription.textContent = image.description;
+            modalDescription.style.display = 'block';
+        } else {
+            modalDescription.style.display = 'none';
+        }
     }
+
+    function showPrevImage() {
+        if (!modalOpen || images.length === 0) return;
+        currentIndex = (currentIndex - 1 + images.length) % images.length;
+        showImage(images[currentIndex]);
+    }
+
+    function showNextImage() {
+        if (!modalOpen || images.length === 0) return;
+        currentIndex = (currentIndex + 1) % images.length;
+        showImage(images[currentIndex]);
+    }
+
+    function closeModal() {
+        document.getElementById('imageModal').style.display = 'none';
+        modalOpen = false;
+    }
+
+    function editImage(id) {
+        location.href = '/edit-image?id=' + id;
+    }
+
+    async function deleteImage(id) {
+        if (confirm('Вы уверены, что хотите удалить это изображение?')) {
+            try {
+                const response = await fetch('/api/images/' + id, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Ошибка при удалении изображения');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ошибка при удалении изображения');
+            }
+        }
+    }
+
+    document.querySelector('.prev').addEventListener('click', showPrevImage);
+    document.querySelector('.next').addEventListener('click', showNextImage);
+    document.querySelector('.close').addEventListener('click', closeModal);
+
+    document.getElementById('imageModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (!modalOpen) return;
+        switch(event.key) {
+            case 'Escape': closeModal(); break;
+            case 'ArrowLeft': showPrevImage(); break;
+            case 'ArrowRight': showNextImage(); break;
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', initGallery);
 </script>
 </body>
 </html>

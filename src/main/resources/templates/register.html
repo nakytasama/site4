@@ -3,75 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация - Site4</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-        .success {
-            color: green;
-            margin-top: 10px;
-        }
-    </style>
+    <title>Регистрация - Галерея изображений</title>
+    <link rel="stylesheet" href="/css/auth-forms.css">
 </head>
-<body>
-<h1>Регистрация</h1>
+<body class="auth-body">
+<div class="auth-form-container">
+    <a href="/" class="auth-back-link">← На главную</a>
 
-<form id="registerForm">
-    <div class="form-group">
-        <label for="username">Имя пользователя:</label>
-        <input type="text" id="username" name="username" required>
+    <div class="auth-form-header">
+        <h2>Создать аккаунт</h2>
     </div>
 
-    <div class="form-group">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-    </div>
+    <div id="message"></div>
 
-    <div class="form-group">
-        <label for="password">Пароль:</label>
-        <input type="password" id="password" name="password" required>
-    </div>
+    <form id="registerForm">
+        <div class="auth-form-group">
+            <label for="username">Логин:</label>
+            <input type="text" id="username" name="username" class="auth-form-control"
+                   required placeholder="Придумайте логин">
+        </div>
 
-    <div class="form-group">
-        <label for="confirmPassword">Подтвердите пароль:</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" required>
-    </div>
+        <div class="auth-form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" class="auth-form-control"
+                   required placeholder="Введите ваш email">
+        </div>
 
-    <button type="submit">Зарегистрироваться</button>
-</form>
+        <div class="auth-form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" name="password" class="auth-form-control"
+                   required placeholder="Придумайте пароль">
+        </div>
 
-<div id="message"></div>
+        <div class="auth-form-group">
+            <label for="confirmPassword">Подтвердите пароль:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" class="auth-form-control"
+                   required placeholder="Повторите пароль">
+        </div>
 
-<p>Уже есть аккаунт? <a href="/login">Войдите</a></p>
-<p><a href="/">На главную</a></p>
+        <button type="submit" class="auth-btn auth-btn-primary">Зарегистрироваться</button>
+
+        <div class="auth-form-footer">
+            Уже есть аккаунт? <a href="/login">Войдите</a>
+        </div>
+    </form>
+</div>
 
 <script>
     document.getElementById('registerForm').addEventListener('submit', async function(event) {
@@ -83,9 +59,8 @@
         const confirmPassword = document.getElementById('confirmPassword').value;
         const messageDiv = document.getElementById('message');
 
-        // Проверка совпадения паролей
         if (password !== confirmPassword) {
-            messageDiv.innerHTML = '<p class="error">Пароли не совпадают!</p>';
+            messageDiv.innerHTML = '<div class="auth-error-message">Пароли не совпадают!</div>';
             return;
         }
 
@@ -104,23 +79,25 @@
 
             if (response.ok) {
                 const data = await response.json();
+                messageDiv.innerHTML = '<div class="auth-success-message">Регистрация успешна! Теперь вы можете войти в систему.</div>';
 
-                messageDiv.innerHTML = '<p class="success">Регистрация успешна! Теперь вы можете войти в систему.</p>';
-
-                // Очищаем форму
                 document.getElementById('registerForm').reset();
 
-                // Перенаправляем на страницу входа через 2 секунды
                 setTimeout(() => {
                     window.location.href = '/login';
                 }, 2000);
 
             } else {
-                const error = await response.text();
-                messageDiv.innerHTML = `<p class="error">Ошибка регистрации: ${error}</p>`;
+                const errorText = await response.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    messageDiv.innerHTML = `<div class="auth-error-message">${errorData.error}</div>`;
+                } catch {
+                    messageDiv.innerHTML = `<div class="auth-error-message">Ошибка регистрации: ${errorText}</div>`;
+                }
             }
         } catch (error) {
-            messageDiv.innerHTML = `<p class="error">Ошибка сети: ${error.message}</p>`;
+            messageDiv.innerHTML = `<div class="auth-error-message">Ошибка сети: ${error.message}</div>`;
         }
     });
 </script>

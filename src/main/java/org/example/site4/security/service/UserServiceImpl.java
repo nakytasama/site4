@@ -16,7 +16,6 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
-    // Возвращаем UserDetails
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username)
@@ -51,7 +50,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
-    // Новые методы для админки
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -67,7 +65,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Защита от смены роли самому себе
         User currentUser = getCurrentUser();
         if (user.getId().equals(currentUser.getId())) {
             throw new RuntimeException("Ты не можешь поменять свою же роль");
@@ -82,7 +79,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Защита от удаления самого себя
         User currentUser = getCurrentUser();
         if (user.getId().equals(currentUser.getId())) {
             throw new RuntimeException("Ты не можешь удалить себя");

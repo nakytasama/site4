@@ -1,0 +1,110 @@
+/* общие стили для форм с изображениями */
+.image-form-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.image-back-link {
+    display: inline-block;
+    margin-bottom: 15px;
+    padding: 5px 10px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+}
+
+.image-back-link:hover {
+    background: #e0e0e0;
+    text-decoration: none;
+}
+
+.image-form-header {
+    margin-bottom: 20px;
+}
+
+.image-form-header h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.image-form-group {
+    margin-bottom: 15px;
+}
+
+.image-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.image-form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+.image-form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.image-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.image-btn-primary {
+    background: #4CAF50;
+    color: white;
+}
+
+.image-btn-primary:hover {
+    background: #45a049;
+}
+
+.image-btn-secondary {
+    background: #6c757d;
+    color: white;
+    margin-left: 10px;
+}
+
+.image-btn-secondary:hover {
+    background: #5a6268;
+}
+
+.image-error-message {
+    color: #dc3545;
+    margin-top: 10px;
+    padding: 10px;
+    background: #ffebee;
+    border-radius: 4px;
+}
+
+.image-file-hint {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.image-current-preview {
+    max-width: 300px;
+    display: block;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}

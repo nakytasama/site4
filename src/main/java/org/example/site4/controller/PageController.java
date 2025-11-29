@@ -1,15 +1,37 @@
 package org.example.site4.controller;
 
+import org.example.site4.domain.Category;
+import org.example.site4.domain.Image;
+import org.example.site4.security.domain.User;
+import org.example.site4.security.service.UserService;
+import org.example.site4.service.ImageService;
+import org.example.site4.service.CategoryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Controller
+@RequiredArgsConstructor
 public class PageController {
+    private final ImageService imageService;
+    private final UserService userService;
+    private final CategoryService categoryService;
 
     @GetMapping("/")
-    public String home() {
+    public String home(Model model) {
+        List<Image> images = imageService.getAllImages();
+        List<Category> categories = categoryService.getAllCategories();
+
+        model.addAttribute("images", images);
+        model.addAttribute("categories", categories);
+
         return "index";
     }
 
@@ -25,15 +47,10 @@ public class PageController {
 
     @GetMapping("/profile")
     public String profile(Model model) {
+        User currentUser = userService.getCurrentUser();
+        List<Image> userImages = imageService.getUserImages(currentUser.getId());
+        model.addAttribute("userImages", userImages);
         return "profile";
-    }
-}
-
-    // когда нибудь (завтра) возможно реализую, надо не забыть изменить начальную страницу:
-    /*
-    @GetMapping("/gallery")
-    public String gallery() {
-        return "gallery";
     }
 
     @GetMapping("/upload")
@@ -41,9 +58,42 @@ public class PageController {
         return "upload";
     }
 
-    @GetMapping("/image/{id}")
-    public String imageDetail(@PathVariable Long id, Model model) {
-        // логика для детальной страницы изображения
-        return "image-detail";
+    @GetMapping("/edit-image")
+    public String editImage(@RequestParam Long id,
+                            @RequestParam(required = false) String from,
+                            Model model) {
+        Image image = imageService.getImageById(id)
+                .orElseThrow(() -> new RuntimeException("Изображение не найдено"));
+        model.addAttribute("image", image);
+        model.addAttribute("from", from);
+        return "edit-image";
     }
-    */
+
+    @GetMapping("/admin")
+    public String admin(Model model) {
+        List<User> users = userService.getAllUsers();
+        List<Image> images = imageService.getAllImages();
+        List<Category> categories = categoryService.getAllCategories();
+
+        Map<Long, User> userMap = users.stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        // Это надо для счётчика изображений по категориям
+        Map<Long, Long> categoryImageCounts = categories.stream()
+                .collect(Collectors.toMap(
+                        Category::getId,
+                        category -> (long) category.getImages().size()
+                ));
+
+        User currentUser = userService.getCurrentUser();
+
+        model.addAttribute("users", users);
+        model.addAttribute("images", images);
+        model.addAttribute("categories", categories);
+        model.addAttribute("userMap", userMap);
+        model.addAttribute("currentUserId", currentUser.getId());
+        model.addAttribute("categoryImageCounts", categoryImageCounts); // ← Добавляем счетчик
+
+        return "admin";
+    }
+}
