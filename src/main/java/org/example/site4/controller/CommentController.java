@@ -2,6 +2,7 @@ package org.example.site4.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.site4.domain.Comment;
+import org.example.site4.dto.CommentDTO;
 import org.example.site4.service.CommentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,8 +17,8 @@ public class CommentController {
 
     // Получить комментарии для изображения
     @GetMapping("/image/{imageId}")
-    public List<Comment> getCommentsByImage(@PathVariable Long imageId) {
-        return commentService.getCommentsByImageId(imageId);
+    public List<CommentDTO> getCommentsByImage(@PathVariable Long imageId) {
+        return commentService.getCommentsByImageIdAsDTO(imageId);
     }
 
     // Добавить комментарий

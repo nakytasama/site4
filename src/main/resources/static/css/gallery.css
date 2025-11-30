@@ -49,6 +49,36 @@ html, body {
     object-fit: cover;
 }
 
+/* Стили для фильтра категорий */
+.filter-container {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-container label {
+    font-weight: 600;
+    color: #333;
+    margin-right: 10px;
+}
+
+.filter-container select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+}
+
+.filter-container select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+/* Стили модального окна */
 .modal {
     display: none;
     position: fixed;
@@ -58,32 +88,219 @@ html, body {
     height: 100%;
     background: rgba(0,0,0,0.9);
     z-index: 1000;
+    overflow-y: auto;
 }
 
 .modal-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: relative;
+    width: 90%;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
 }
 
 .modal-content-wrapper {
-    position: relative;
-    max-width: 90%;
-    max-height: 90vh;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+/* Основное содержимое изображения */
+.image-main-content {
+    text-align: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.modal-content {
+    max-width: 100%;
+    max-height: 60vh;
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+/* Контейнер для информации об изображении */
+.image-info-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 15px auto 0;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.modal-content {
-    max-width: 100%;
-    max-height: 70vh;
-    display: block;
+.image-category-modal {
+    color: #4CAF50;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 10px 15px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    text-align: center;
+}
+
+.image-description {
+    color: white;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 16px;
+    line-height: 1.5;
+    word-break: break-word;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: left;
+}
+
+/* Секция комментариев */
+.comments-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.comments-section h4 {
+    color: white;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.comments-list-container {
+    margin-bottom: 20px;
+}
+
+.no-comments {
+    color: #999;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Стили для отдельных комментариев */
+.comment {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: bold;
+}
+
+.comment-text {
+    font-size: 14px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.comment-actions {
+    margin-top: 8px;
+    text-align: right;
+}
+
+.comment-delete {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.comment-delete:hover {
+    background: #d32f2f;
+}
+
+/* Форма комментария */
+.comment-form {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.comment-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 80px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.comment-textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.comment-submit {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    width: 100%;
+}
+
+.comment-submit:hover {
+    background: #45a049;
+}
+
+.comment-login-prompt {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-style: italic;
+}
+
+.comment-login-prompt a {
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+.comment-login-prompt a:hover {
+    text-decoration: underline;
+}
+
+/* Навигация модального окна */
+.close {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.close:hover {
+    color: #ccc;
 }
 
 .modal-nav {
@@ -110,92 +327,3 @@ html, body {
 
 .prev { left: 20px; }
 .next { right: 20px; }
-
-.close {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    color: white;
-    font-size: 30px;
-    cursor: pointer;
-    background: rgba(0,0,0,0.5);
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    line-height: 1;
-    z-index: 1001;
-}
-
-.close:hover {
-    background: rgba(0,0,0,0.8);
-}
-
-.image-description {
-    text-align: center;
-    color: white;
-    padding: 12px 20px;
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 8px;
-    font-size: 16px;
-    margin-top: 15px;
-    max-width: 80%;
-    width: auto;
-    word-break: break-word;
-    line-height: 1.4;
-}
-
-/* Стили для фильтра категорий */
-.filter-container {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.filter-container label {
-    font-weight: 600;
-    color: #333;
-}
-
-.filter-container select {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 8px 12px;
-    background: white;
-    cursor: pointer;
-}
-
-.filter-container select:focus {
-    outline: none;
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-}
-
-/* Стили для категории в модальном окне */
-.image-category-modal {
-    text-align: center;
-    color: #4CAF50;
-    font-weight: 600;
-    font-size: 16px;
-    margin-top: 15px;
-    padding: 8px 16px;
-    background: rgba(76, 175, 80, 0.1);
-    border-radius: 20px;
-    display: inline-block;
-    display: none; /* Скрыто по умолчанию */
-}
-
-/* Стили для категории в карточке изображения */
-.image-category {
-    font-size: 12px;
-    color: #666;
-    margin-top: 5px;
-    padding: 2px 8px;
-    background: #f0f0f0;
-    border-radius: 12px;
-    display: inline-block;
-}

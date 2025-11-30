@@ -59,11 +59,8 @@
 
             if (response.ok) {
                 const data = await response.json();
-                messageDiv.innerHTML = '<div class="auth-success-message">Вход успешен! Перенаправление...</div>';
+                window.location.href = '/';
 
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
 
             } else {
                 const errorText = await response.text();

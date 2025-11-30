@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/images")
@@ -63,7 +64,7 @@ public class ImageController {
 
     @PostMapping("/{id}/update")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<Image> updateImage(
+    public ResponseEntity<?> updateImage(
             @PathVariable Long id,
             @RequestParam("title") String title,
             @RequestParam("description") String description,
@@ -87,7 +88,8 @@ public class ImageController {
         } catch (RuntimeException e) {
             System.out.println("Error in updateImage: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.badRequest().body(null);
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 

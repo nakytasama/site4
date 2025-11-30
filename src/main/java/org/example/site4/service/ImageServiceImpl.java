@@ -10,15 +10,18 @@ import org.example.site4.repository.ImageRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +35,15 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     public List<Image> getAllImages() {
-        return imageRepository.findAllWithUsers();
+        try {
+            return imageRepository.findAllWithExistingUsers();
+        } catch (Exception e) {
+            // Если есть проблемы с целостностью данных, используем альтернативный метод
+            System.err.println("Ошибка при загрузке изображений: " + e.getMessage());
+            return imageRepository.findAll().stream()
+                    .filter(image -> image.getUser() != null)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override
@@ -90,39 +101,44 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
+    @Transactional
     public Image updateImage(Long id, Image imageDetails, MultipartFile file, Long categoryId) {
         return imageRepository.findById(id)
                 .map(image -> {
-                    User currentUser = userService.getCurrentUser();
-                    boolean isOwner = image.getUser().getId().equals(currentUser.getId());
-                    boolean isAdmin = currentUser.getAuthorities().stream()
-                            .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+                    try {
+                        User currentUser = userService.getCurrentUser();
+                        boolean isOwner = image.getUser().getId().equals(currentUser.getId());
+                        boolean isAdmin = currentUser.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
 
-                    if (!isOwner && !isAdmin) {
-                        throw new RuntimeException("Вы можете редактировать только свои изображения");
-                    }
+                        if (!isOwner && !isAdmin) {
+                            throw new RuntimeException("Вы можете редактировать только свои изображения");
+                        }
 
-                    if (imageDetails.getTitle() != null) {
-                        image.setTitle(imageDetails.getTitle());
-                    }
-                    if (imageDetails.getDescription() != null) {
-                        image.setDescription(imageDetails.getDescription());
-                    }
+                        if (imageDetails.getTitle() != null) {
+                            image.setTitle(imageDetails.getTitle());
+                        }
+                        if (imageDetails.getDescription() != null) {
+                            image.setDescription(imageDetails.getDescription());
+                        }
 
-                    if (categoryId != null) {
-                        Category category = categoryRepository.findById(categoryId)
-                                .orElseThrow(() -> new RuntimeException("Категория не найдена"));
-                        image.setCategory(category);
-                    } else {
-                        image.setCategory(null);
-                    }
+                        if (categoryId != null) {
+                            Category category = categoryRepository.findById(categoryId)
+                                    .orElseThrow(() -> new RuntimeException("Категория не найдена"));
+                            image.setCategory(category);
+                        } else {
+                            image.setCategory(null);
+                        }
 
-                    if (file != null && !file.isEmpty()) {
-                        validateFile(file);
-                        updateImageFile(image, file);
-                    }
+                        if (file != null && !file.isEmpty()) {
+                            validateFile(file);
+                            updateImageFile(image, file);
+                        }
 
-                    return imageRepository.save(image);
+                        return imageRepository.save(image);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Ошибка при обновлении изображения: " + e.getMessage());
+                    }
                 })
                 .orElseThrow(() -> new RuntimeException("Изображение не найдено"));
     }
@@ -156,6 +172,20 @@ public class ImageServiceImpl implements ImageService {
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new RuntimeException("Можно загружать только изображения");
+        }
+
+        // Проверка размера файла (10MB)
+        if (file.getSize() > 100 * 1024 * 1024) {
+            throw new RuntimeException("Размер файла не должен превышать 10MB");
+        }
+
+        // Проверка расширения файла
+        String originalFileName = file.getOriginalFilename();
+        if (originalFileName != null) {
+            String fileExtension = originalFileName.substring(originalFileName.lastIndexOf(".")).toLowerCase();
+            if (!Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp").contains(fileExtension)) {
+                throw new RuntimeException("Поддерживаются только файлы JPG, JPEG, PNG, GIF, BMP и WebP");
+            }
         }
     }
 

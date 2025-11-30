@@ -1,13 +1,24 @@
 package org.example.site4.security.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.site4.domain.Image;
+import org.example.site4.domain.Comment;
+import org.example.site4.repository.ImageRepository;
+import org.example.site4.repository.CommentRepository;
 import org.example.site4.security.domain.User;
 import org.example.site4.security.domain.Role;
 import org.example.site4.security.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +26,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
+    private final CommentRepository commentRepository;
+
+    @Value("${upload.path:uploads}")
+    private String uploadPath;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -32,6 +48,11 @@ public class UserServiceImpl implements UserService {
     public User getByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+    }
+
+    @Override
+    public Optional<User> findByUsernameSafe(String username) {
+        return userRepository.findByUsername(username);
     }
 
     @Override
@@ -75,6 +96,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
@@ -84,6 +106,31 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Ты не можешь удалить себя");
         }
 
-        userRepository.delete(user);
+        try {
+            // Удаляем все изображения пользователя
+            List<Image> userImages = imageRepository.findByUserId(userId);
+            for (Image image : userImages) {
+                try {
+                    Path filePath = Paths.get(uploadPath, image.getImagePath());
+                    Files.deleteIfExists(filePath);
+                } catch (IOException e) {
+                    System.err.println("Не удалось удалить файл изображения: " + image.getImagePath());
+                }
+
+                // Удаляем комментарии
+                commentRepository.deleteByImageId(image.getId());
+
+                imageRepository.delete(image);
+            }
+
+            List<Comment> userComments = commentRepository.findByUserId(userId);
+            commentRepository.deleteAll(userComments);
+
+            // Удаляем пользователя
+            userRepository.delete(user);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при удалении пользователя: " + e.getMessage());
+        }
     }
 }

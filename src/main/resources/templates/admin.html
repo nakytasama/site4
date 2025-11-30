@@ -4,322 +4,183 @@
     <meta charset="UTF-8">
     <title>Админ-панель</title>
     <link rel="stylesheet" href="/css/header.css">
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .scroll-container {
-            height: calc(100vh - 70px);
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .scroll-container::-webkit-scrollbar {
-            display: none;
-            width: 0;
-            background: transparent;
-        }
-        .scroll-container {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-        .section {
-            background: #fff;
-            border-radius: 5px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1, h2 {
-            color: #333;
-            margin-top: 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-        tr:hover {
-            background-color: #f9f9f9;
-        }
-        input[type="text"], textarea, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        textarea {
-            height: 80px;
-            resize: vertical;
-        }
-        .preview-img {
-            max-width: 80px;
-            max-height: 60px;
-            display: block;
-            border-radius: 4px;
-            object-fit: cover;
-        }
-        .actions {
-            white-space: nowrap;
-        }
-        .actions button {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-right: 5px;
-        }
-        .btn-update {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .btn-delete {
-            background-color: #f44336;
-            color: white;
-        }
-        .btn-update:hover {
-            background-color: #45a049;
-        }
-        .btn-delete:hover {
-            background-color: #d32f2f;
-        }
-        .error-message {
-            color: #d32f2f;
-            padding: 10px;
-            background: #ffebee;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-
-        .btn-save {
-            background: #28a745;
-            color: white;
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-save:hover {
-            background: #218838;
-        }
-
-        /* Стиль для поля ввода при редактировании */
-        input[type="text"] {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        /* Стили для редактирования категорий */
-        .category-edit-container {
-            position: relative;
-            min-height: 30px;
-            display: flex;
-            align-items: center;
-        }
-
-        .category-name {
-            display: block;
-            padding: 5px 0;
-            min-width: 200px;
-        }
-
-        .category-input {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 200px;
-            padding: 5px;
-            box-sizing: border-box;
-        }
-
-        /* Стиль для ссылки, которая выглядит как кнопка */
-        a.btn-update {
-            display: inline-block;
-            padding: 6px 12px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 14px;
-            margin-right: 5px;
-        }
-
-        a.btn-update:hover {
-            background-color: #45a049;
-            text-decoration: none;
-            color: white;
-        }
-
-
-    </style>
-
+    <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
 <div class="scroll-container">
-    <div th:if="${error != null}" class="error-message" th:text="${error}"></div>
-
     <div class="section">
-        <h2>Пользователи</h2>
-        <table>
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Логин</th>
-                <th>Email</th>
-                <th>Роль</th>
-                <th>Действия</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="user : ${users}">
-                <td th:text="${user.id}"></td>
-                <td th:text="${user.username}"></td>
-                <td th:text="${user.email}"></td>
-                <td>
-                    <select th:id="'role-' + ${user.id}" th:attr="data-original-role=${user.role}">
-                        <option th:if="${user.role.toString() == 'ROLE_USER'}"
-                                value="ROLE_USER" selected>USER</option>
-                        <option th:unless="${user.role.toString() == 'ROLE_USER'}"
-                                value="ROLE_USER">USER</option>
-
-                        <option th:if="${user.role.toString() == 'ROLE_ADMIN'}"
-                                value="ROLE_ADMIN" selected>ADMIN</option>
-                        <option th:unless="${user.role.toString() == 'ROLE_ADMIN'}"
-                                value="ROLE_ADMIN">ADMIN</option>
-                    </select>
-                </td>
-                <td class="actions">
-                    <button class="btn-update" th:onclick="'updateUserRole(' + ${user.id} + ')'">Обновить роль</button>
-                    <button class="btn-delete" th:onclick="'deleteUser(' + ${user.id} + ')'">Удалить</button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <h1>Администрирование</h1>
+        <div th:if="${error != null}" class="error-message" th:text="${error}"></div>
     </div>
 
+    <!-- Пользователи -->
+    <div class="section">
+        <h2>Управление пользователями</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th class="id-column">ID</th>
+                    <th class="name-column">Логин</th>
+                    <th class="description-column">Email</th>
+                    <th class="category-column">Роль</th>
+                    <th class="actions-column">Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${users}">
+                    <td class="id-column" th:text="${user.id}"></td>
+                    <td class="name-column">
+                        <span class="truncate" th:text="${user.username}"></span>
+                    </td>
+                    <td class="description-column">
+                        <span class="truncate" th:text="${user.email}"></span>
+                    </td>
+                    <td class="category-column">
+                        <select th:id="'role-' + ${user.id}" th:attr="data-original-role=${user.role}" class="role-select">
+                            <option th:if="${user.role.toString() == 'ROLE_USER'}"
+                                    value="ROLE_USER" selected>USER</option>
+                            <option th:unless="${user.role.toString() == 'ROLE_USER'}"
+                                    value="ROLE_USER">USER</option>
+                            <option th:if="${user.role.toString() == 'ROLE_ADMIN'}"
+                                    value="ROLE_ADMIN" selected>ADMIN</option>
+                            <option th:unless="${user.role.toString() == 'ROLE_ADMIN'}"
+                                    value="ROLE_ADMIN">ADMIN</option>
+                        </select>
+                    </td>
+                    <td class="actions-column">
+                        <div class="actions">
+                            <button class="btn btn-update" th:onclick="'updateUserRole(' + ${user.id} + ')'">Обновить роль</button>
+                            <button class="btn btn-delete" th:onclick="'deleteUser(' + ${user.id} + ')'">Удалить</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Изображения -->
     <div class="section">
         <h2>Все изображения</h2>
-        <table>
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Описание</th>
-                <th>Автор</th>
-                <th>Категория</th>
-                <th>Превью</th>
-                <th>Действия</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="image : ${images}">
-                <td th:text="${image.id}"></td>
-                <td th:text="${image.title}"></td>
-                <td th:text="${image.description}"></td>
-                <td>
-                <span th:if="${image.user != null}"
-                      th:text="${image.user.username}"></span>
-                    <span th:unless="${image.user != null}">Unknown</span>
-                </td>
-                <td th:text="${image.category?.name ?: 'Без категории'}"></td>
-                <td>
-                    <img th:src="@{'/uploads/' + ${image.imagePath}}"
-                         class="preview-img" alt="Превью">
-                </td>
-                <td class="actions">
-                    <a th:href="@{/edit-image(id=${image.id}, from='admin')}" class="btn-update">Редактировать</a>
-                    <button class="btn-delete" th:onclick="'deleteImage(' + ${image.id} + ')'">Удалить</button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th class="id-column">ID</th>
+                    <th class="name-column">Название</th>
+                    <th class="description-column">Описание</th>
+                    <th class="author-column">Автор</th>
+                    <th class="category-column">Категория</th>
+                    <th class="preview-column">Превью</th>
+                    <th class="actions-column">Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="image : ${images}">
+                    <td class="id-column" th:text="${image.id}"></td>
+                    <td class="name-column">
+                        <span class="truncate" th:text="${image.title}"></span>
+                    </td>
+                    <td class="description-column">
+                        <div class="multiline">
+                            <span th:if="${image.description}" th:text="${image.description}"></span>
+                            <span th:unless="${image.description}" style="color: #999; font-style: italic;">Нет описания</span>
+                        </div>
+                    </td>
+                    <td class="author-column">
+                        <span class="truncate" th:if="${image.user != null}" th:text="${image.user.username}"></span>
+                        <span th:unless="${image.user != null}" style="color: #999;">Unknown</span>
+                    </td>
+                    <td class="category-column">
+                        <span class="truncate" th:if="${image.category?.name}" th:text="${image.category.name}"></span>
+                        <span th:unless="${image.category?.name}" style="color: #999;">Без категории</span>
+                    </td>
+                    <td class="preview-column">
+                        <img th:src="@{'/uploads/' + ${image.imagePath}}"
+                             class="preview-img" alt="Превью"
+                             onerror="this.style.display='none'">
+                    </td>
+                    <td class="actions-column">
+                        <div class="actions">
+                            <a th:href="@{/edit-image(id=${image.id}, from='admin')}" class="btn btn-update">Редактировать</a>
+                            <button class="btn btn-delete" th:onclick="'deleteImage(' + ${image.id} + ')'">Удалить</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- Категории -->
     <div class="section">
         <h2>Управление категориями</h2>
-        <div style="margin-bottom: 20px;">
+
+        <div class="category-form">
             <h3>Добавить категорию</h3>
             <div id="categoryMessage"></div>
-            <input type="text" id="categoryName" placeholder="Название категории" style="padding: 8px; margin-right: 10px;">
-            <button class="btn-update" onclick="addCategory()">Добавить</button>
+            <div class="category-form-row">
+                <input type="text" id="categoryName" placeholder="Введите название категории" class="category-form-input">
+                <button class="btn btn-update category-form-button" onclick="addCategory()">Добавить категорию</button>
+            </div>
         </div>
 
-        <table>
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Кол-во изображений</th>
-                <th>Действия</th>
-            </tr>
-            </thead>
-            <tbody id="categoriesTable">
-            <tr th:each="category : ${categories}">
-                <td th:text="${category.id}"></td>
-                <td>
-                    <div class="category-edit-container">
-                        <span th:text="${category.name}"
-                            th:id="'categoryName-' + ${category.id}"
-                            class="category-name"></span>
-                        <input type="text" th:value="${category.name}"
-                               th:id="'categoryInput-' + ${category.id}"
-                               class="category-input"
-                               style="display: none;">
-                    </div>
-                </td>
-                <td th:text="${categoryImageCounts.get(category.id)}"></td>
-                <td class="actions">
-                    <button class="btn-update"
-                            th:onclick="'editCategory(' + ${category.id} + ')'"
-                            th:id="'editBtn-' + ${category.id}">Редактировать</button>
-                    <button class="btn-save"
-                            th:onclick="'saveCategory(' + ${category.id} + ')'"
-                            th:id="'saveBtn-' + ${category.id}"
-                            style="display: none; background: #28a745;">Сохранить</button>
-                    <button class="btn-delete"
-                            th:onclick="'deleteCategory(' + ${category.id} + ')'">Удалить</button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th class="id-column">ID</th>
+                    <th class="name-column">Название</th>
+                    <th class="category-column">Кол-во изображений</th>
+                    <th class="actions-column">Действия</th>
+                </tr>
+                </thead>
+                <tbody id="categoriesTable">
+                <tr th:each="category : ${categories}">
+                    <td class="id-column" th:text="${category.id}"></td>
+                    <td class="name-column">
+                        <div class="category-edit-container">
+                            <span th:text="${category.name}"
+                                  th:id="'categoryName-' + ${category.id}"
+                                  class="category-name truncate"></span>
+                            <input type="text" th:value="${category.name}"
+                                   th:id="'categoryInput-' + ${category.id}"
+                                   class="category-input"
+                                   style="display: none;"
+                                   th:attr="onkeypress='if(event.keyCode==13) saveCategory(${category.id})'">
+                        </div>
+                    </td>
+                    <td class="category-column">
+                        <span class="image-count" th:text="${categoryImageCounts.get(category.id)}"></span>
+                    </td>
+                    <td class="actions-column">
+                        <div class="actions">
+                            <button class="btn btn-update"
+                                    th:onclick="'editCategory(' + ${category.id} + ')'"
+                                    th:id="'editBtn-' + ${category.id}">Редактировать</button>
+                            <button class="btn btn-save"
+                                    th:onclick="'saveCategory(' + ${category.id} + ')'"
+                                    th:id="'saveBtn-' + ${category.id}"
+                                    style="display: none;">Сохранить</button>
+                            <button class="btn btn-delete"
+                                    th:onclick="'deleteCategory(' + ${category.id} + ')'">Удалить</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-
 </div>
 
 <script>
     // Обновление роли пользователя
     async function updateUserRole(userId) {
         const roleSelect = document.getElementById('role-' + userId);
-        const originalRole = roleSelect.getAttribute('data-original-role'); // Сохраняем исходную роль
+        const originalRole = roleSelect.getAttribute('data-original-role');
         const newRole = roleSelect.value;
 
         try {
@@ -331,22 +192,22 @@
             });
 
             if (response.ok) {
-                alert('Роль пользователя обновлена');
-                location.reload();
+                showMessage('Роль пользователя успешно обновлена', 'success');
+                roleSelect.setAttribute('data-original-role', newRole);
             } else {
                 const errorText = await response.text();
                 try {
                     const errorData = JSON.parse(errorText);
-                    alert(errorData.error);
+                    showMessage(errorData.error, 'error');
                     roleSelect.value = originalRole;
                 } catch {
-                    alert('Ошибка при обновлении роли');
+                    showMessage('Ошибка при обновлении роли', 'error');
                     roleSelect.value = originalRole;
                 }
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Ошибка при обновлении роли');
+            showMessage('Ошибка сети при обновлении роли', 'error');
             roleSelect.value = originalRole;
         }
     }
@@ -360,20 +221,20 @@
                 });
 
                 if (response.ok) {
-                    alert('Пользователь удален');
-                    location.reload();
+                    showMessage('Пользователь успешно удален', 'success');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     const errorText = await response.text();
                     try {
                         const errorData = JSON.parse(errorText);
-                        alert(errorData.error);
+                        showMessage(errorData.error, 'error');
                     } catch {
-                        alert('Ошибка при удалении пользователя');
+                        showMessage('Ошибка при удалении пользователя', 'error');
                     }
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Ошибка при удалении пользователя');
+                showMessage('Ошибка сети при удалении пользователя', 'error');
             }
         }
     }
@@ -387,31 +248,32 @@
                 });
 
                 if (response.ok) {
-                    alert('Изображение удалено');
-                    location.reload();
+                    showMessage('Изображение успешно удалено', 'success');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     const errorText = await response.text();
                     try {
                         const errorData = JSON.parse(errorText);
-                        alert(errorData.error);
+                        showMessage(errorData.error, 'error');
                     } catch {
-                        alert('Ошибка при удалении изображения');
+                        showMessage('Ошибка при удалении изображения', 'error');
                     }
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Ошибка при удалении изображения');
+                showMessage('Ошибка сети при удалении изображения', 'error');
             }
         }
     }
 
     // Добавление категории
     async function addCategory() {
-        const name = document.getElementById('categoryName').value;
+        const nameInput = document.getElementById('categoryName');
+        const name = nameInput.value.trim();
         const messageDiv = document.getElementById('categoryMessage');
 
         if (!name) {
-            messageDiv.innerHTML = '<div class="error-message">Введите название категории</div>';
+            showMessage('Введите название категории', 'error', messageDiv);
             return;
         }
 
@@ -427,9 +289,9 @@
             });
 
             if (response.ok) {
-                messageDiv.innerHTML = '<div style="color: green;">Категория добавлена</div>';
-                document.getElementById('categoryName').value = '';
-                location.reload();
+                showMessage('Категория успешно добавлена', 'success', messageDiv);
+                nameInput.value = '';
+                setTimeout(() => location.reload(), 1000);
             } else {
                 const errorText = await response.text();
                 let errorMessage = 'Ошибка добавления категории';
@@ -441,28 +303,30 @@
                     errorMessage = errorText || errorMessage;
                 }
 
-                messageDiv.innerHTML = `<div class="error-message">${errorMessage}</div>`;
+                showMessage(errorMessage, 'error', messageDiv);
             }
         } catch (error) {
-            messageDiv.innerHTML = `<div class="error-message">Ошибка сети: ${error.message}</div>`;
+            showMessage('Ошибка сети: ' + error.message, 'error', messageDiv);
         }
     }
 
     // Редактирование категории
     function editCategory(categoryId) {
         document.getElementById('categoryName-' + categoryId).style.display = 'none';
-        document.getElementById('categoryInput-' + categoryId).style.display = 'inline';
+        document.getElementById('categoryInput-' + categoryId).style.display = 'block';
+        document.getElementById('categoryInput-' + categoryId).focus();
 
         document.getElementById('editBtn-' + categoryId).style.display = 'none';
-        document.getElementById('saveBtn-' + categoryId).style.display = 'inline';
+        document.getElementById('saveBtn-' + categoryId).style.display = 'inline-block';
     }
 
     // Сохранение категории
     async function saveCategory(categoryId) {
+        const messageContainer = document.getElementById('categoryMessage');
         const newName = document.getElementById('categoryInput-' + categoryId).value.trim();
 
         if (!newName) {
-            alert('Введите название категории');
+            showMessage('Введите название категории', 'error', messageContainer);
             return;
         }
 
@@ -479,12 +343,12 @@
 
             if (response.ok) {
                 document.getElementById('categoryName-' + categoryId).textContent = newName;
-                document.getElementById('categoryName-' + categoryId).style.display = 'inline';
+                document.getElementById('categoryName-' + categoryId).style.display = 'block';
                 document.getElementById('categoryInput-' + categoryId).style.display = 'none';
-                document.getElementById('editBtn-' + categoryId).style.display = 'inline';
+                document.getElementById('editBtn-' + categoryId).style.display = 'inline-block';
                 document.getElementById('saveBtn-' + categoryId).style.display = 'none';
 
-                alert('Категория обновлена');
+                showMessage('Категория успешно обновлена', 'success', messageContainer);
             } else {
                 const errorText = await response.text();
                 let errorMessage = 'Ошибка при обновлении категории';
@@ -496,15 +360,18 @@
                     errorMessage = errorText || errorMessage;
                 }
 
-                alert(errorMessage);
+                showMessage(errorMessage, 'error', messageContainer);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Ошибка сети при обновлении категории');
+            showMessage('Ошибка сети при обновлении категории', 'error', messageContainer);
         }
     }
 
+    // Удаление категории
     async function deleteCategory(categoryId) {
+        const messageContainer = document.getElementById('categoryMessage');
+
         if (confirm('Вы уверены, что хотите удалить эту категорию?')) {
             try {
                 const response = await fetch('/api/admin/categories/' + categoryId, {
@@ -512,8 +379,8 @@
                 });
 
                 if (response.ok) {
-                    alert('Категория удалена');
-                    location.reload();
+                    showMessage('Категория успешно удалена', 'success', messageContainer);
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     const errorText = await response.text();
                     let errorMessage = 'Ошибка при удалении категории';
@@ -525,14 +392,61 @@
                         errorMessage = errorText || errorMessage;
                     }
 
-                    alert(errorMessage);
+                    showMessage(errorMessage, 'error', messageContainer);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Ошибка при удалении категории');
+                showMessage('Ошибка при удалении категории', 'error', messageContainer);
             }
         }
     }
+
+    // Вспомогательная функция для показа сообщений
+    function showMessage(message, type, container = null) {
+        let messageContainer = container;
+
+        if (!messageContainer) {
+            const firstSection = document.querySelector('.section');
+            messageContainer = firstSection;
+        }
+
+        const oldMessages = messageContainer.querySelectorAll('.temp-message');
+        oldMessages.forEach(msg => msg.remove());
+
+        const messageElement = document.createElement('div');
+        messageElement.className = type === 'success' ? 'success-message' : 'error-message';
+        messageElement.classList.add('temp-message');
+        messageElement.textContent = message;
+
+        if (container && container.id === 'categoryMessage') {
+            messageContainer.innerHTML = '';
+            messageContainer.appendChild(messageElement);
+        } else {
+            const h1 = messageContainer.querySelector('h1');
+            if (h1 && h1.nextSibling) {
+                messageContainer.insertBefore(messageElement, h1.nextSibling);
+            } else {
+                messageContainer.appendChild(messageElement);
+            }
+        }
+
+        setTimeout(() => {
+            if (messageElement.parentNode) {
+                messageElement.remove();
+            }
+        }, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryInput = document.getElementById('categoryName');
+        if (categoryInput) {
+            categoryInput.addEventListener('keypress', function(e) {
+                if (e.keyCode === 13) {
+                    addCategory();
+                }
+            });
+        }
+    });
 </script>
 </body>
 </html>

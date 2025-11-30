@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +9,25 @@
     <link rel="stylesheet" href="/css/gallery.css">
 </head>
 <body>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    window.userData = {
+        isAuthenticated: /*[[${#authorization.expression('isAuthenticated()')}]]*/ false,
+        userId: /*[[${#authentication.principal != null && #authentication.principal != 'anonymousUser' ? #authentication.principal.id : null}]]*/ null,
+        username: /*[[${#authentication.name}]]*/ null,
+        isAdmin: /*[[${#authorization.expression('hasRole(''ROLE_ADMIN'')')}]]*/ false
+    };
+    /*]]>*/
+</script>
+
 <div th:replace="~{fragments/header :: header}"></div>
 
 <div class="content-container">
     <!-- Фильтр категорий -->
-    <div class="filter-container" style="margin-bottom: 20px; text-align: center;">
-        <label for="categoryFilter" style="margin-right: 10px;">Фильтр по категории:</label>
-        <select id="categoryFilter" onchange="filterByCategory()" style="padding: 8px; border-radius: 4px;">
+    <div class="filter-container">
+        <label for="categoryFilter">Фильтр по категории:</label>
+        <select id="categoryFilter" onchange="filterByCategory()">
             <option value="">Все категории</option>
             <option th:each="category : ${categories}"
                     th:value="${category.id}"
@@ -32,7 +45,7 @@
              th:data-index="${stat.index}"
              th:attr="data-category-id=${image.category?.id ?: ''},
                   data-description=${image.description},
-                  data-category-name=${image.category?.name}"> <!-- Добавляем название категории -->
+                  data-category-name=${image.category?.name}">
             <img th:src="@{'/uploads/' + ${image.imagePath}}"
                  th:alt="${image.title}">
             <div th:text="${image.title}">Название</div>
@@ -43,11 +56,30 @@
 <div class="modal" id="imageModal">
     <div class="modal-container">
         <div class="modal-content-wrapper">
-            <img class="modal-content" id="modalImage">
+            <!-- Изображение и основная информация -->
+            <div class="image-main-content">
+                <img class="modal-content" id="modalImage">
 
-            <div class="image-category-modal" id="modalCategory"></div>
+                <div class="image-info-container">
+                    <div class="image-category-modal" id="modalCategory"></div>
+                    <div class="image-description" id="modalDescription"></div>
+                </div>
+            </div>
 
-            <div class="image-description" id="modalDescription"></div>
+            <!-- Комментарии -->
+            <div class="comments-section" id="commentsSection">
+                <h4>Комментарии</h4>
+                <div id="commentsList" class="comments-list-container"></div>
+
+                <div th:if="${#authorization.expression('isAuthenticated()')}" class="comment-form">
+                    <textarea id="commentText" class="comment-textarea" placeholder="Добавить комментарий..."></textarea>
+                    <button onclick="addComment()" class="comment-submit">Отправить</button>
+                </div>
+
+                <div th:unless="${#authorization.expression('isAuthenticated()')}" class="comment-login-prompt">
+                    <a href="/login">Войдите</a>, чтобы увидеть или оставить комментарии
+                </div>
+            </div>
         </div>
     </div>
     <span class="close">&times;</span>
@@ -56,9 +88,15 @@
 </div>
 
 <script>
+    let currentImageId = null;
     let currentIndex = 0;
     let images = [];
     let modalOpen = false;
+
+    let currentUserId = window.userData.userId;
+    let isAdmin = window.userData.isAdmin;
+
+    console.log('Данные пользователя из Thymeleaf:', window.userData);
 
     function initGallery() {
         const imageCards = document.querySelectorAll('.image-card');
@@ -68,7 +106,7 @@
             imagePath: card.querySelector('img').src.split('/uploads/')[1],
             description: card.getAttribute('data-description') || '',
             categoryId: card.getAttribute('data-category-id') || '',
-            categoryName: card.getAttribute('data-category-name') || '' // Берем из data-атрибута
+            categoryName: card.getAttribute('data-category-name') || ''
         }));
 
         imageCards.forEach((card, index) => {
@@ -92,7 +130,7 @@
 
         if (image.categoryName && image.categoryName.trim() !== '') {
             modalCategory.textContent = 'Категория: ' + image.categoryName;
-            modalCategory.style.display = 'block';
+            modalCategory.style.display = 'inline-block';
         } else {
             modalCategory.style.display = 'none';
         }
@@ -103,6 +141,9 @@
         } else {
             modalDescription.style.display = 'none';
         }
+
+        currentImageId = image.id;
+        loadComments(currentImageId);
     }
 
     function showPrevImage() {
@@ -117,19 +158,114 @@
         showImage(images[currentIndex]);
     }
 
+    async function loadComments(imageId) {
+        try {
+            const response = await fetch(`/api/comments/image/${imageId}`);
+            if (response.ok) {
+                const comments = await response.json();
+                displayComments(comments);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки комментариев:', error);
+        }
+    }
+
+    function displayComments(comments) {
+        const commentsList = document.getElementById('commentsList');
+        commentsList.innerHTML = '';
+
+        if (!comments || comments.length === 0) {
+            commentsList.innerHTML = '<p class="no-comments">Комментариев пока нет</p>';
+            return;
+        }
+
+        console.log('Текущий пользователь ID:', currentUserId);
+        console.log('isAdmin:', isAdmin);
+        console.log('Комментарии:', comments);
+
+        comments.forEach(comment => {
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment';
+
+            const canDelete = currentUserId && (isAdmin || currentUserId === comment.userId);
+
+            commentDiv.innerHTML = `
+            <div class="comment-header">
+                <span class="comment-author">${comment.username}</span>
+                <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+            </div>
+            <div class="comment-text">${comment.text}</div>
+            ${canDelete ?
+                `<div class="comment-actions">
+                    <button onclick="deleteComment(${comment.id})" class="comment-delete">Удалить</button>
+                </div>`
+                : ''
+            }
+        `;
+            commentsList.appendChild(commentDiv);
+        });
+    }
+
+    async function addComment() {
+        const commentText = document.getElementById('commentText').value.trim();
+
+        if (!commentText) {
+            alert('Введите текст комментария');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: commentText,
+                    image: { id: currentImageId }
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById('commentText').value = '';
+                loadComments(currentImageId);
+            } else {
+                alert('Ошибка при добавлении комментария');
+            }
+        } catch (error) {
+            alert('Ошибка сети');
+        }
+    }
+
+    async function deleteComment(commentId) {
+        if (!confirm('Удалить комментарий?')) return;
+
+        try {
+            const response = await fetch(`/api/comments/${commentId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                loadComments(currentImageId);
+            } else {
+                alert('Ошибка при удалении комментария');
+            }
+        } catch (error) {
+            alert('Ошибка сети');
+        }
+    }
+
     function closeModal() {
         document.getElementById('imageModal').style.display = 'none';
         modalOpen = false;
     }
 
-    // Фильтрация по категориям
     function filterByCategory() {
         const selectedCategoryId = document.getElementById('categoryFilter').value;
         const imageCards = document.querySelectorAll('.image-card');
 
         imageCards.forEach(card => {
             const cardCategoryId = card.getAttribute('data-category-id');
-
             if (!selectedCategoryId || cardCategoryId === selectedCategoryId) {
                 card.style.display = 'block';
             } else {
@@ -138,6 +274,12 @@
         });
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Данные пользователя:', window.userData);
+        initGallery();
+    });
+
+    // Обработчики событий
     document.querySelector('.prev').addEventListener('click', showPrevImage);
     document.querySelector('.next').addEventListener('click', showNextImage);
     document.querySelector('.close').addEventListener('click', closeModal);
@@ -160,7 +302,6 @@
                 break;
         }
     });
-
     document.addEventListener('DOMContentLoaded', initGallery);
 </script>
 </body>

@@ -19,4 +19,7 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     List<Image> searchByTitleOrDescription(@Param("query") String query);
 
     List<Image> findByOrderByCreatedAtDesc(Pageable pageable);
+
+    @Query("SELECT i FROM Image i WHERE i.user IS NOT NULL ORDER BY i.createdAt DESC")
+    List<Image> findAllWithExistingUsers();
 }

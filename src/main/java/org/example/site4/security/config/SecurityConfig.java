@@ -58,10 +58,16 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
+                            String requestURI = request.getRequestURI();
 
-                            System.out.println("Authentication required for: " + request.getRequestURI());
-
-                            response.sendRedirect("/login");
+                            if (requestURI.startsWith("/api/")) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"error\":\"Требуется аутентификация\"}");
+                            } else {
+                                System.out.println("Authentication required for: " + requestURI);
+                                response.sendRedirect("/login");
+                            }
                         })
                 )
                 .logout(logout -> logout

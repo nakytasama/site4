@@ -1,6 +1,8 @@
 package org.example.site4.service;
 
 import org.example.site4.domain.Comment;
+import org.example.site4.dto.CommentDTO;
+
 import java.util.List;
 
 public interface CommentService {
@@ -11,4 +13,6 @@ public interface CommentService {
     void deleteComment(Long id);
     void deleteCommentsByImageId(Long imageId);
     void deleteCommentsByUserId(Long userId);
+    List<Comment> getAllComments();
+    List<CommentDTO> getCommentsByImageIdAsDTO(Long imageId);
 }

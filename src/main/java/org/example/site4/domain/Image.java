@@ -33,7 +33,7 @@ public class Image {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Comment> comments = new ArrayList<>();
 
     @PrePersist

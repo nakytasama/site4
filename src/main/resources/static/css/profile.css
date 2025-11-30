@@ -54,32 +54,3 @@
     color: #666;
     grid-column: 1 / -1;
 }
-
-/* Стили для категории в модальном окне */
-.image-category-modal {
-    text-align: center;
-    color: #4CAF50;
-    font-weight: 600;
-    font-size: 16px;
-    margin-top: 15px;
-    padding: 8px 16px;
-    background: rgba(76, 175, 80, 0.1);
-    border-radius: 20px;
-    display: inline-block;
-    display: none;
-}
-
-.image-description {
-    text-align: center;
-    color: white;
-    padding: 12px 20px;
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 8px;
-    font-size: 16px;
-    margin-top: 15px;
-    max-width: 80%;
-    width: auto;
-    word-break: break-word;
-    line-height: 1.4;
-    display: none;
-}

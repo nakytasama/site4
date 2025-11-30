@@ -79,13 +79,8 @@
 
             if (response.ok) {
                 const data = await response.json();
-                messageDiv.innerHTML = '<div class="auth-success-message">Регистрация успешна! Теперь вы можете войти в систему.</div>';
+                window.location.href = '/login';
 
-                document.getElementById('registerForm').reset();
-
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
 
             } else {
                 const errorText = await response.text();

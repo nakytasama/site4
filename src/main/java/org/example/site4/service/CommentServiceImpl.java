@@ -3,12 +3,14 @@ package org.example.site4.service;
 import lombok.RequiredArgsConstructor;
 import org.example.site4.domain.Comment;
 import org.example.site4.domain.Image;
+import org.example.site4.dto.CommentDTO;
 import org.example.site4.security.domain.User;
 import org.example.site4.repository.CommentRepository;
 import org.example.site4.repository.ImageRepository;
 import org.example.site4.security.service.UserService;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,26 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<Comment> getCommentsByUserId(Long userId) {
         return commentRepository.findByUserId(userId);
+    }
+
+    @Override
+    public List<Comment> getAllComments() {
+        return commentRepository.findAll();
+    }
+
+    @Override
+    public List<CommentDTO> getCommentsByImageIdAsDTO(Long imageId) {
+        List<Comment> comments = commentRepository.findByImageIdOrderByCreatedAtDesc(imageId);
+        return comments.stream()
+                .map(comment -> new CommentDTO(
+                        comment.getId(),
+                        comment.getText(),
+                        comment.getCreatedAt(),
+                        comment.getUser().getUsername(),
+                        comment.getUser().getId(),
+                        comment.getImage().getId()
+                ))
+                .collect(Collectors.toList());
     }
 
     @Override

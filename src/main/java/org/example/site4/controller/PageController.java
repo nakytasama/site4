@@ -71,29 +71,33 @@ public class PageController {
 
     @GetMapping("/admin")
     public String admin(Model model) {
-        List<User> users = userService.getAllUsers();
-        List<Image> images = imageService.getAllImages();
-        List<Category> categories = categoryService.getAllCategories();
+        try {
+            List<User> users = userService.getAllUsers();
+            List<Image> images = imageService.getAllImages();
+            List<Category> categories = categoryService.getAllCategories();
 
-        Map<Long, User> userMap = users.stream()
-                .collect(Collectors.toMap(User::getId, Function.identity()));
+            Map<Long, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        // Это надо для счётчика изображений по категориям
-        Map<Long, Long> categoryImageCounts = categories.stream()
-                .collect(Collectors.toMap(
-                        Category::getId,
-                        category -> (long) category.getImages().size()
-                ));
+            Map<Long, Long> categoryImageCounts = categories.stream()
+                    .collect(Collectors.toMap(
+                            Category::getId,
+                            category -> (long) category.getImages().size()
+                    ));
 
-        User currentUser = userService.getCurrentUser();
+            User currentUser = userService.getCurrentUser();
 
-        model.addAttribute("users", users);
-        model.addAttribute("images", images);
-        model.addAttribute("categories", categories);
-        model.addAttribute("userMap", userMap);
-        model.addAttribute("currentUserId", currentUser.getId());
-        model.addAttribute("categoryImageCounts", categoryImageCounts); // ← Добавляем счетчик
+            model.addAttribute("users", users);
+            model.addAttribute("images", images);
+            model.addAttribute("categories", categories);
+            model.addAttribute("userMap", userMap);
+            model.addAttribute("currentUserId", currentUser.getId());
+            model.addAttribute("categoryImageCounts", categoryImageCounts);
 
-        return "admin";
+            return "admin";
+        } catch (Exception e) {
+            model.addAttribute("error", "Ошибка загрузки данных: " + e.getMessage());
+            return "admin";
+        }
     }
 }
